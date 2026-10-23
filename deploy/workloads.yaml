@@ -1,0 +1,155 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: install-site
+  namespace: sub2api
+  labels:
+    app.kubernetes.io/name: install-site
+    app.kubernetes.io/part-of: sub2api
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: install-site
+  template:
+    metadata:
+      labels:
+        app: install-site
+        app.kubernetes.io/name: install-site
+        app.kubernetes.io/part-of: sub2api
+    spec:
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101
+        runAsGroup: 101
+        fsGroup: 101
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: nginx
+          image: hub.hangyi.top/library/nginx:1.30.6-alpine-slim
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 20m
+              memory: 32Mi
+            limits:
+              cpu: 300m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: nginx-conf
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+              readOnly: true
+            - name: site
+              mountPath: /usr/share/nginx/html
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 30
+            timeoutSeconds: 3
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 12
+      volumes:
+        - name: nginx-conf
+          configMap:
+            name: install-site
+            defaultMode: 0444
+            items:
+              - key: nginx.conf
+                path: nginx.conf
+        - name: site
+          configMap:
+            name: install-site
+            defaultMode: 0444
+            items:
+              - key: index.html
+                path: index.html
+              - key: install.sh
+                path: install.sh
+              - key: install.ps1
+                path: install.ps1
+        - name: tmp
+          emptyDir:
+            sizeLimit: 64Mi
+      terminationGracePeriodSeconds: 15
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: install-site
+  namespace: sub2api
+  labels:
+    app.kubernetes.io/name: install-site
+    app.kubernetes.io/part-of: sub2api
+spec:
+  type: ClusterIP
+  selector:
+    app: install-site
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: install-site-public
+  namespace: sub2api
+  labels:
+    app.kubernetes.io/name: install-site
+    app.kubernetes.io/part-of: sub2api
+spec:
+  hostnames:
+    - install.ncuos.com
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: public
+      namespace: istio-system
+      sectionName: https-ncuos-wildcard
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - group: ""
+          kind: Service
+          name: install-site
+          port: 80
+          weight: 1

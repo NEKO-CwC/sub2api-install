@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>接入工具 · Sub2API</title>
+<meta name="description" content="把 Claude Code、Codex CLI、OpenCode 接到 Sub2API：选好工具和系统，复制一条命令到终端运行。">
+<meta name="theme-color" content="#0f172a">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2314b8a6'/%3E%3Cpath d='M9 21l5-10 5 10M11 17h6' stroke='%2304202a' stroke-width='2.2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+:root {
+  --primary-300: #5eead4;
+  --primary-400: #2dd4bf;
+  --primary-500: #14b8a6;
+  --primary-600: #0d9488;
+  --primary-700: #0f766e;
+  --bg-950: #020617;
+  --bg-900: #0f172a;
+  --bg-850: #131d33;
+  --bg-800: #1e293b;
+  --bg-700: #334155;
+  --text: #e2e8f0;
+  --text-dim: #94a3b8;
+  --text-faint: #64748b;
+  --border: #1e293b;
+  --border-soft: #24314a;
+  --ok: #34d399;
+  --warn: #fbbf24;
+  --err: #f87171;
+  --radius: 14px;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  --sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+}
+
+html[data-theme="light"] {
+  --bg-950: #f8fafc;
+  --bg-900: #ffffff;
+  --bg-850: #f1f5f9;
+  --bg-800: #e2e8f0;
+  --bg-700: #cbd5e1;
+  --text: #0f172a;
+  --text-dim: #475569;
+  --text-faint: #64748b;
+  --border: #e2e8f0;
+  --border-soft: #dbe3ec;
+  --primary-300: #0f766e;
+  --primary-400: #0d9488;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--sans);
+  background:
+    radial-gradient(1100px 520px at 50% -180px, rgba(20, 184, 166, .16), transparent 65%),
+    radial-gradient(800px 400px at 100% 0%, rgba(13, 148, 136, .10), transparent 60%),
+    var(--bg-950);
+  color: var(--text);
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--primary-300); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.wrap { max-width: 1020px; margin: 0 auto; padding: 0 24px 96px; }
+
+/* ---------- 顶栏 ---------- */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  backdrop-filter: blur(14px);
+  background: color-mix(in srgb, var(--bg-950) 82%, transparent);
+  border-bottom: 1px solid var(--border);
+}
+.topbar-inner {
+  max-width: 1020px;
+  margin: 0 auto;
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.brand { display: flex; align-items: center; gap: 10px; color: var(--text); }
+.brand:hover { text-decoration: none; }
+.brand-mark {
+  width: 30px; height: 30px; border-radius: 9px;
+  background: linear-gradient(135deg, var(--primary-400), var(--primary-600));
+  display: grid; place-items: center;
+  box-shadow: 0 0 18px rgba(20, 184, 166, .35);
+}
+.brand-mark svg { width: 17px; height: 17px; }
+.brand-name { font-weight: 650; letter-spacing: -.01em; }
+.brand-sub { color: var(--text-faint); font-size: 13px; }
+.topbar-spacer { flex: 1; }
+.ghost-btn {
+  appearance: none; border: 1px solid var(--border-soft); background: transparent;
+  color: var(--text-dim); border-radius: 9px; padding: 6px 11px;
+  font-size: 13px; font-family: inherit; cursor: pointer; transition: .16s;
+}
+.ghost-btn:hover { color: var(--text); border-color: var(--primary-600); }
+
+/* ---------- Hero ---------- */
+.hero { padding: 56px 0 34px; }
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: 12.5px; color: var(--primary-300);
+  background: rgba(20, 184, 166, .1);
+  border: 1px solid rgba(20, 184, 166, .28);
+  padding: 5px 11px; border-radius: 999px;
+  margin-bottom: 18px;
+}
+.eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--primary-400); }
+h1 {
+  font-size: clamp(28px, 4.4vw, 40px);
+  line-height: 1.25;
+  letter-spacing: -.025em;
+  margin: 0 0 14px;
+  font-weight: 680;
+}
+.hero p { color: var(--text-dim); font-size: 16.5px; max-width: 640px; margin: 0; }
+
+/* ---------- 通用卡片 ---------- */
+.card {
+  background: linear-gradient(180deg, var(--bg-900), color-mix(in srgb, var(--bg-900) 70%, var(--bg-950)));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 26px;
+  margin-bottom: 22px;
+}
+.card-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 4px; flex-wrap: wrap; }
+.step-no {
+  flex: none;
+  width: 25px; height: 25px; border-radius: 8px;
+  background: rgba(20, 184, 166, .13);
+  border: 1px solid rgba(20, 184, 166, .3);
+  color: var(--primary-300);
+  font-size: 13px; font-weight: 650;
+  display: grid; place-items: center;
+}
+h2 { font-size: 19px; margin: 0; letter-spacing: -.01em; font-weight: 640; }
+.card-desc { color: var(--text-dim); font-size: 14.5px; margin: 6px 0 22px; }
+
+/* ---------- 选择器 ---------- */
+.field { margin-bottom: 20px; }
+.field:last-child { margin-bottom: 0; }
+.field-label {
+  display: block; font-size: 12.5px; font-weight: 600;
+  color: var(--text-faint); letter-spacing: .04em;
+  text-transform: uppercase; margin-bottom: 9px;
+}
+.seg {
+  display: inline-flex; flex-wrap: wrap; gap: 6px;
+  background: var(--bg-950);
+  border: 1px solid var(--border);
+  border-radius: 11px; padding: 5px;
+}
+.seg button {
+  appearance: none; border: 0; background: transparent;
+  color: var(--text-dim); font-family: inherit; font-size: 14px;
+  padding: 8px 15px; border-radius: 8px; cursor: pointer;
+  transition: .15s; white-space: nowrap;
+}
+.seg button:hover { color: var(--text); }
+.seg button[aria-pressed="true"] {
+  background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
+  color: #f0fdfa;
+  box-shadow: 0 2px 12px rgba(13, 148, 136, .35);
+}
+.seg button small { display: block; font-size: 11px; opacity: .75; font-weight: 400; }
+
+/* ---------- 代码块 ---------- */
+.code {
+  position: relative;
+  background: #060b16;
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+html[data-theme="light"] .code { background: #0b1220; }
+.code-head {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 14px;
+  background: rgba(255, 255, 255, .03);
+  border-bottom: 1px solid var(--border-soft);
+}
+.code-title { font-family: var(--mono); font-size: 12px; color: #7c8ba1; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.copy-btn {
+  appearance: none; border: 1px solid #26344b; background: #121c2f;
+  color: #a8b6cc; font-family: inherit; font-size: 12px;
+  padding: 4px 11px; border-radius: 7px; cursor: pointer;
+  transition: .15s; flex: none;
+}
+.copy-btn:hover { color: #e2e8f0; border-color: var(--primary-600); }
+.copy-btn.copied { color: #6ee7b7; border-color: #059669; background: #062b21; }
+.code pre {
+  margin: 0; padding: 16px 16px 18px;
+  font-family: var(--mono); font-size: 13px; line-height: 1.72;
+  color: #d6e2f0; overflow-x: auto;
+  white-space: pre; tab-size: 2;
+}
+.code pre .c { color: #5b7089; }
+.code pre .k { color: #7dd3fc; }
+.code pre .s { color: #6ee7b7; }
+.code pre .v { color: #fcd34d; }
+
+/* ---------- 提示条 ---------- */
+.note {
+  display: flex; gap: 11px;
+  padding: 13px 15px; border-radius: 11px;
+  font-size: 13.5px; line-height: 1.6;
+  border: 1px solid;
+  margin: 16px 0;
+}
+.note svg { flex: none; width: 17px; height: 17px; margin-top: 2px; }
+.note.info { background: rgba(20, 184, 166, .07); border-color: rgba(20, 184, 166, .25); color: #b9e6e0; }
+.note.warn { background: rgba(251, 191, 36, .07); border-color: rgba(251, 191, 36, .26); color: #f0dcae; }
+.note.tip  { background: rgba(148, 163, 184, .07); border-color: rgba(148, 163, 184, .2); color: #c4cfdd; }
+html[data-theme="light"] .note.info { color: #0f766e; }
+html[data-theme="light"] .note.warn { color: #92400e; }
+html[data-theme="light"] .note.tip { color: #334155; }
+
+/* ---------- 终端教学 ---------- */
+.tabs { display: flex; gap: 6px; border-bottom: 1px solid var(--border); margin-bottom: 22px; flex-wrap: wrap; }
+.tab {
+  appearance: none; border: 0; background: transparent;
+  color: var(--text-dim); font-family: inherit; font-size: 14px;
+  padding: 10px 4px 11px; margin-right: 18px; cursor: pointer;
+  border-bottom: 2px solid transparent; transition: .15s;
+}
+.tab:hover { color: var(--text); }
+.tab[aria-selected="true"] { color: var(--primary-300); border-bottom-color: var(--primary-500); }
+
+.howto { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; align-items: start; }
+@media (max-width: 780px) { .howto { grid-template-columns: 1fr; } }
+
+.steps { counter-reset: s; list-style: none; margin: 0; padding: 0; }
+.steps li {
+  counter-increment: s;
+  position: relative;
+  padding: 0 0 20px 38px;
+  font-size: 14.5px;
+  color: var(--text-dim);
+}
+.steps li:last-child { padding-bottom: 0; }
+.steps li::before {
+  content: counter(s);
+  position: absolute; left: 0; top: 1px;
+  width: 24px; height: 24px; border-radius: 50%;
+  background: var(--bg-850); border: 1px solid var(--border-soft);
+  color: var(--primary-300); font-size: 12.5px; font-weight: 650;
+  display: grid; place-items: center;
+}
+.steps li::after {
+  content: ""; position: absolute; left: 12px; top: 28px; bottom: 4px;
+  width: 1px; background: var(--border);
+}
+.steps li:last-child::after { display: none; }
+.steps strong { color: var(--text); font-weight: 600; }
+kbd {
+  display: inline-block;
+  font-family: var(--mono); font-size: 12px;
+  background: var(--bg-800); border: 1px solid var(--bg-700);
+  border-bottom-width: 2px;
+  padding: 1px 6px; border-radius: 5px;
+  color: var(--text); white-space: nowrap;
+}
+
+/* ---------- 截图位 ---------- */
+.shot {
+  margin: 0;
+  border: 1px dashed var(--border-soft);
+  border-radius: 12px;
+  background:
+    repeating-linear-gradient(135deg, rgba(148,163,184,.035) 0 10px, transparent 10px 20px),
+    var(--bg-850);
+  min-height: 150px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 7px; padding: 18px; text-align: center;
+}
+.shot img { width: 100%; height: auto; display: block; border-radius: 8px; }
+.shot figcaption { font-size: 12.5px; color: var(--text-faint); max-width: 300px; line-height: 1.55; }
+.shot .shot-icon { width: 26px; height: 26px; color: var(--text-faint); opacity: .7; }
+.shot .shot-tag {
+  font-family: var(--mono); font-size: 11px; color: var(--primary-300);
+  background: rgba(20,184,166,.1); border: 1px solid rgba(20,184,166,.25);
+  padding: 2px 8px; border-radius: 999px;
+}
+.shot.has-image { border-style: solid; background: var(--bg-850); padding: 10px; }
+
+/* ---------- 列表 ---------- */
+.checklist { list-style: none; margin: 0; padding: 0; }
+.checklist li {
+  display: flex; gap: 11px; padding: 11px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 14.5px; color: var(--text-dim);
+}
+.checklist li:last-child { border-bottom: 0; }
+.checklist svg { flex: none; width: 17px; height: 17px; color: var(--primary-400); margin-top: 3px; }
+.checklist strong { color: var(--text); font-weight: 600; }
+
+/* ---------- 表格 ---------- */
+.tbl-wrap { overflow-x: auto; margin-top: 6px; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { color: var(--text-faint); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
+td { color: var(--text-dim); }
+td code, p code, li code {
+  font-family: var(--mono); font-size: 12.5px;
+  background: var(--bg-850); border: 1px solid var(--border);
+  padding: 1px 5px; border-radius: 5px; color: var(--primary-300);
+}
+
+/* ---------- 页脚 ---------- */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 26px 0 0; margin-top: 40px;
+  color: var(--text-faint); font-size: 13px;
+  display: flex; gap: 18px; flex-wrap: wrap;
+}
+
+.hidden { display: none !important; }
+
+/* ---------- 打印 ---------- */
+@media print {
+  body { background: #fff; color: #000; }
+  .topbar, .copy-btn, .seg, .tabs { display: none; }
+  .card { border-color: #ddd; break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="/">
+      <span class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#04202a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 19l6-14 6 14"/><path d="M8.2 14h7.6"/>
+        </svg>
+      </span>
+      <span>
+        <span class="brand-name">Sub2API</span>
+        <span class="brand-sub">接入工具</span>
+      </span>
+    </a>
+    <div class="topbar-spacer"></div>
+    <button class="ghost-btn" id="theme-toggle" type="button" aria-label="切换主题">主题</button>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="hero">
+    <span class="eyebrow"><span class="dot"></span>大约 2 分钟</span>
+    <h1>把 AI 编程工具接到 Sub2API</h1>
+    <p>选好工具和系统，复制一条命令到终端运行。脚本会自动写好配置、校验 Key，最后发一条测试消息。Key 只在你的终端里输入，不经过浏览器。</p>
+  </section>
+
+  <!-- ========== 1. 打开终端 ========== -->
+  <section class="card" id="terminal">
+    <div class="card-head">
+      <span class="step-no">1</span>
+      <h2>打开终端</h2>
+    </div>
+    <p class="card-desc">终端是一个用文字和电脑对话的窗口。后面那条命令就粘贴在这里。第一次用的话，按下面三步做即可。</p>
+
+    <div class="tabs" role="tablist" aria-label="操作系统">
+      <button class="tab" role="tab" id="tab-win" aria-controls="panel-win" aria-selected="true" data-os="win">Windows</button>
+      <button class="tab" role="tab" id="tab-mac" aria-controls="panel-mac" aria-selected="false" data-os="mac">macOS</button>
+      <button class="tab" role="tab" id="tab-linux" aria-controls="panel-linux" aria-selected="false" data-os="linux">Linux</button>
+    </div>
+
+    <div class="howto" id="panel-win" role="tabpanel" aria-labelledby="tab-win">
+      <ol class="steps">
+        <li><strong>按 <kbd>Win</kbd> + <kbd>X</kbd></strong>，在弹出的菜单里选 <strong>「终端」</strong> 或 <strong>「Windows PowerShell」</strong>。<br>如果菜单里没有，点开始菜单搜索 <code>PowerShell</code>。</li>
+        <li>窗口打开后会显示一行以 <code>PS C:\Users\你的用户名&gt;</code> 结尾的提示符。光标停在 <code>&gt;</code> 后面，说明可以输入了。</li>
+        <li>不用右键粘贴：直接 <kbd>Ctrl</kbd> + <kbd>V</kbd> 就能粘贴，然后按 <kbd>Enter</kbd> 执行。</li>
+      </ol>
+      <figure class="shot" data-shot="windows-open-terminal">
+        <svg class="shot-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 3-3 3M13 15h4"/></svg>
+        <span class="shot-tag">windows-open-terminal.png</span>
+        <figcaption>Win+X 菜单里「终端」的位置</figcaption>
+      </figure>
+    </div>
+
+    <div class="howto hidden" id="panel-mac" role="tabpanel" aria-labelledby="tab-mac">
+      <ol class="steps">
+        <li><strong>按 <kbd>Command</kbd> + <kbd>空格</kbd></strong> 打开聚焦搜索，输入 <code>终端</code> 或 <code>Terminal</code>，按 <kbd>Enter</kbd>。</li>
+        <li>也可以从 <strong>访达 → 应用程序 → 实用工具 → 终端</strong> 打开。</li>
+        <li>窗口里出现以 <code>%</code> 或 <code>$</code> 结尾的提示符，就可以粘贴命令了（<kbd>Command</kbd> + <kbd>V</kbd>）。</li>
+      </ol>
+      <figure class="shot" data-shot="mac-open-terminal">
+        <svg class="shot-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 3-3 3M13 15h4"/></svg>
+        <span class="shot-tag">mac-open-terminal.png</span>
+        <figcaption>聚焦搜索里输入「终端」的画面</figcaption>
+      </figure>
+    </div>
+
+    <div class="howto hidden" id="panel-linux" role="tabpanel" aria-labelledby="tab-linux">
+      <ol class="steps">
+        <li><strong>按 <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>T</kbd></strong>，大多数桌面发行版会直接打开终端。</li>
+        <li>如果没反应，在应用菜单里找 <strong>Terminal</strong> / <strong>终端</strong> / <strong>Console</strong>。</li>
+        <li>提示符通常以 <code>$</code> 结尾。粘贴用 <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>V</kbd>。</li>
+      </ol>
+      <figure class="shot" data-shot="linux-open-terminal">
+        <svg class="shot-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 3-3 3M13 15h4"/></svg>
+        <span class="shot-tag">linux-open-terminal.png</span>
+        <figcaption>Linux 终端窗口的提示符</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ========== 2. 选工具 ========== -->
+  <section class="card" id="choose">
+    <div class="card-head">
+      <span class="step-no">2</span>
+      <h2>选择工具和系统</h2>
+    </div>
+    <p class="card-desc">下面生成的命令会跟着你的选择变化。</p>
+
+    <div class="field">
+      <span class="field-label">工具</span>
+      <div class="seg" id="seg-client" role="group" aria-label="工具">
+        <button type="button" data-client="claude-code" aria-pressed="true">Claude Code</button>
+        <button type="button" data-client="codex" aria-pressed="false">Codex CLI</button>
+        <button type="button" data-client="opencode" aria-pressed="false">OpenCode</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <span class="field-label">系统</span>
+      <div class="seg" id="seg-os" role="group" aria-label="系统">
+        <button type="button" data-os="win" aria-pressed="false">Windows</button>
+        <button type="button" data-os="mac" aria-pressed="true">macOS / Linux</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <span class="field-label">Sub2API 地址</span>
+      <div class="seg" id="seg-base" role="group" aria-label="接入地址">
+        <button type="button" data-base="https://sub2api.ncuos.com" aria-pressed="true">sub2api.ncuos.com</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 3. 先拿 Key ========== -->
+  <section class="card" id="key">
+    <div class="card-head">
+      <span class="step-no">3</span>
+      <h2>准备一个 Key</h2>
+    </div>
+    <p class="card-desc">Key 相当于你的通行证。脚本运行时会让你粘贴，不会保存在网页里。</p>
+
+    <ul class="checklist">
+      <li>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        <span>打开 <a href="https://sub2api.ncuos.com/keys" target="_blank" rel="noopener">sub2api.ncuos.com/keys</a>，登录你的账号。</span>
+      </li>
+      <li>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        <span>点「创建 API Key」，给它起个名字（比如 <code>我的笔记本</code>），选好分组。</span>
+      </li>
+      <li>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        <span>复制以 <code>sk-</code> 开头的那一串。先放在剪贴板里，下一步会用到。</span>
+      </li>
+    </ul>
+
+    <div class="note warn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>
+      <span>Key 等同于密码。不要发到群里、不要提交到 Git 仓库、不要贴进截图。泄露了就在 Keys 页面删掉重建。</span>
+    </div>
+
+    <figure class="shot" data-shot="keys-create">
+      <svg class="shot-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 3-3 3M13 15h4"/></svg>
+      <span class="shot-tag">keys-create.png</span>
+      <figcaption>Keys 页面里「创建 API Key」按钮的位置</figcaption>
+    </figure>
+  </section>
+
+  <!-- ========== 4. 复制命令 ========== -->
+  <section class="card" id="run">
+    <div class="card-head">
+      <span class="step-no">4</span>
+      <h2>复制命令，粘贴到终端</h2>
+    </div>
+    <p class="card-desc" id="run-desc">回到终端，粘贴下面这条，按回车。脚本会提示你粘贴 Key（输入时不会显示），然后自动完成剩下的步骤。</p>
+
+    <!-- Windows -->
+    <div id="cmd-win" class="hidden">
+      <div class="code">
+        <div class="code-head">
+          <span class="code-title">PowerShell</span>
+          <button class="copy-btn" type="button" data-copy="cmd-win-text">复制</button>
+        </div>
+        <pre id="cmd-win-text"></pre>
+      </div>
+    </div>
+
+    <!-- macOS / Linux -->
+    <div id="cmd-unix">
+      <div class="code">
+        <div class="code-head">
+          <span class="code-title">Terminal</span>
+          <button class="copy-btn" type="button" data-copy="cmd-unix-text">复制</button>
+        </div>
+        <pre id="cmd-unix-text"></pre>
+      </div>
+    </div>
+
+    <div class="note tip">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
+      <span id="install-hint">没装 Node.js 也没关系。脚本会检查环境，缺什么会告诉你怎么补。</span>
+    </div>
+
+    <details class="adv">
+      <summary>可选：让脚本顺便安装 / 升级 CLI</summary>
+      <p class="card-desc" style="margin:12px 0 10px">默认只写配置，不动你已装的工具。加上这个参数后，脚本会用 <code>npm install -g</code> 安装对应 CLI（需要 Node.js）。</p>
+      <div class="code">
+        <div class="code-head">
+          <span class="code-title" id="cmd-install-title">Terminal · 带 CLI 安装</span>
+          <button class="copy-btn" type="button" data-copy="cmd-install-text">复制</button>
+        </div>
+        <pre id="cmd-install-text"></pre>
+      </div>
+    </details>
+
+    <details class="adv">
+      <summary>可选：先看看脚本会改什么（不写入任何文件）</summary>
+      <p class="card-desc" style="margin:12px 0 10px">加 <code>--dry-run</code>（Windows 是 <code>-DryRun</code>）只打印将要写入的内容，不落盘。</p>
+      <div class="code">
+        <div class="code-head">
+          <span class="code-title" id="cmd-dry-title">Terminal · 预演</span>
+          <button class="copy-btn" type="button" data-copy="cmd-dry-text">复制</button>
+        </div>
+        <pre id="cmd-dry-text"></pre>
+      </div>
+    </details>
+
+    <figure class="shot" data-shot="terminal-paste-key">
+      <svg class="shot-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 3-3 3M13 15h4"/></svg>
+      <span class="shot-tag">terminal-paste-key.png</span>
+      <figcaption>脚本提示「请粘贴 Sub2API Key」的画面</figcaption>
+    </figure>
+  </section>
+
+  <!-- ========== 5. 验证 ========== -->
+  <section class="card" id="verify">
+    <div class="card-head">
+      <span class="step-no">5</span>
+      <h2>确认成功</h2>
+    </div>
+    <p class="card-desc">脚本跑完后会显示它写了哪个文件、你有哪些模型、当前计费倍率。然后按下面两步确认能真的用起来。</p>
+
+    <ul class="checklist">
+      <li>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        <span><strong>新开一个终端窗口</strong>，运行 <code id="launch-cmd">claude</code>，随便问一句话。能正常回复就说明通了。</span>
+      </li>
+      <li>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        <span>回到 <a href="https://sub2api.ncuos.com/usage" target="_blank" rel="noopener">用量明细</a>，应该能看到刚才这次调用。</span>
+      </li>
+    </ul>
+
+    <div class="note info">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
+      <span>如果终端里提示找不到命令（<code>command not found</code> / <code>不是内部或外部命令</code>），说明这个工具还没装。回到第 4 步，用「带 CLI 安装」那条命令重跑一次。</span>
+    </div>
+
+    <figure class="shot" data-shot="usage-verify">
+      <svg class="shot-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 3-3 3M13 15h4"/></svg>
+      <span class="shot-tag">usage-verify.png</span>
+      <figcaption>用量明细里出现这次调用的记录</figcaption>
+    </figure>
+  </section>
+
+  <!-- ========== 6. 回滚 ========== -->
+  <section class="card" id="rollback">
+    <div class="card-head">
+      <span class="step-no">6</span>
+      <h2>想撤销？</h2>
+    </div>
+    <p class="card-desc">脚本在改文件之前都会留一份备份，文件名带 <code>.bak.sub2api-时间戳</code>。加一个参数就能恢复到上一次。</p>
+    <div class="code">
+      <div class="code-head">
+        <span class="code-title" id="cmd-restore-title">Terminal</span>
+        <button class="copy-btn" type="button" data-copy="cmd-restore-text">复制</button>
+      </div>
+      <pre id="cmd-restore-text"></pre>
+    </div>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr><th>工具</th><th>改动的文件</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Claude Code</td><td><code id="path-claude">~/.claude/settings.json</code></td></tr>
+          <tr><td>Codex CLI</td><td><code id="path-codex">~/.codex/config.toml</code></td></tr>
+          <tr><td>OpenCode</td><td><code id="path-opencode">~/.config/opencode/opencode.json</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note tip">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M3 12h18"/></svg>
+      <span>脚本只改这三个文件里的对应配置块，不会动你其它设置，也不会改系统环境变量。Codex 的配置是以 <code>[model_providers.sub2api]</code> 表的形式追加的，想手动清理直接删掉这一整段即可。</span>
+    </div>
+  </section>
+
+  <footer>
+    <span>Sub2API 接入工具</span>
+    <a href="https://sub2api.ncuos.com" target="_blank" rel="noopener">返回 Sub2API</a>
+    <a href="https://sub2api.ncuos.com/keys" target="_blank" rel="noopener">管理 Key</a>
+  </footer>
+
+</main>
+
+<script>
+(function () {
+  'use strict';
+
+  var SITE = 'https://install.ncuos.com';
+  var BASE = 'https://sub2api.ncuos.com';
+
+  var state = { client: 'claude-code', os: 'unix', base: BASE };
+
+  var CLIENT_META = {
+    'claude-code': { label: 'Claude Code', launch: 'claude', installPkg: '@anthropic-ai/claude-code' },
+    'codex':       { label: 'Codex CLI',   launch: 'codex',  installPkg: '@openai/codex' },
+    'opencode':    { label: 'OpenCode',    launch: 'opencode', installPkg: 'opencode-ai' }
+  };
+
+  function cmdUnix() {
+    return 'curl -fsSL ' + SITE + '/install.sh | bash -s -- --client ' + state.client;
+  }
+
+  function cmdWin() {
+    return '& ([scriptblock]::Create((irm ' + SITE + '/install.ps1))) -Client ' + state.client;
+  }
+
+  function cmdUnixInstall() {
+    return 'curl -fsSL ' + SITE + '/install.sh | bash -s -- --client ' + state.client + ' --install-cli';
+  }
+
+  function cmdWinInstall() {
+    return '& ([scriptblock]::Create((irm ' + SITE + '/install.ps1))) -Client ' + state.client + ' -InstallCli';
+  }
+
+  function cmdUnixDry() {
+    return 'curl -fsSL ' + SITE + '/install.sh | bash -s -- --client ' + state.client + ' --dry-run';
+  }
+
+  function cmdWinDry() {
+    return '& ([scriptblock]::Create((irm ' + SITE + '/install.ps1))) -Client ' + state.client + ' -DryRun';
+  }
+
+  function cmdUnixRestore() {
+    return 'curl -fsSL ' + SITE + '/install.sh | bash -s -- --client ' + state.client + ' --restore';
+  }
+
+  function cmdWinRestore() {
+    return '& ([scriptblock]::Create((irm ' + SITE + '/install.ps1))) -Client ' + state.client + ' -Restore';
+  }
+
+  function render() {
+    var isWin = state.os === 'win';
+    var meta = CLIENT_META[state.client];
+
+    document.getElementById('cmd-win').classList.toggle('hidden', !isWin);
+    document.getElementById('cmd-unix').classList.toggle('hidden', isWin);
+
+    document.getElementById('cmd-win-text').textContent = cmdWin();
+    document.getElementById('cmd-unix-text').textContent = cmdUnix();
+    document.getElementById('cmd-install-text').textContent = isWin ? cmdWinInstall() : cmdUnixInstall();
+    document.getElementById('cmd-dry-text').textContent = isWin ? cmdWinDry() : cmdUnixDry();
+    document.getElementById('cmd-restore-text').textContent = isWin ? cmdWinRestore() : cmdUnixRestore();
+
+    document.getElementById('cmd-install-title').textContent =
+      (isWin ? 'PowerShell' : 'Terminal') + ' · 带 CLI 安装 (' + meta.installPkg + ')';
+    document.getElementById('cmd-dry-title').textContent =
+      (isWin ? 'PowerShell' : 'Terminal') + ' · 预演';
+    document.getElementById('cmd-restore-title').textContent =
+      (isWin ? 'PowerShell' : 'Terminal') + ' · 恢复';
+
+    document.getElementById('launch-cmd').textContent = meta.launch;
+
+    document.getElementById('path-claude').textContent =
+      isWin ? '%USERPROFILE%\\.claude\\settings.json' : '~/.claude/settings.json';
+    document.getElementById('path-codex').textContent =
+      isWin ? '%USERPROFILE%\\.codex\\config.toml' : '~/.codex/config.toml';
+    document.getElementById('path-opencode').textContent =
+      isWin ? '%USERPROFILE%\\.config\\opencode\\opencode.json' : '~/.config/opencode/opencode.json';
+
+    document.getElementById('run-desc').textContent = isWin
+      ? '回到终端（PowerShell），粘贴下面这条，按回车。脚本会提示你粘贴 Key（输入时不会显示），然后自动完成剩下的步骤。'
+      : '回到终端，粘贴下面这条，按回车。脚本会提示你粘贴 Key（输入时不会显示），然后自动完成剩下的步骤。';
+
+    document.getElementById('install-hint').textContent = isWin
+      ? '没装 Node.js 也没关系。脚本会检查环境，缺什么会告诉你怎么补。要装 CLI 才需要 Node.js。'
+      : '没装 Node.js 也没关系。脚本会检查环境，缺什么会告诉你怎么补。要装 CLI 才需要 Node.js。';
+  }
+
+  // ---- 工具切换 ----
+  document.querySelectorAll('#seg-client button').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      state.client = btn.dataset.client;
+      document.querySelectorAll('#seg-client button').forEach(function (b) {
+        b.setAttribute('aria-pressed', String(b === btn));
+      });
+      render();
+    });
+  });
+
+  // ---- 系统切换（同时联动终端教学标签）----
+  document.querySelectorAll('#seg-os button').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      state.os = btn.dataset.os === 'win' ? 'win' : 'unix';
+      document.querySelectorAll('#seg-os button').forEach(function (b) {
+        b.setAttribute('aria-pressed', String(b === btn));
+      });
+      selectOsTab(state.os);
+      render();
+    });
+  });
+
+  // ---- 地址切换 ----
+  document.querySelectorAll('#seg-base button').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      state.base = btn.dataset.base;
+      document.querySelectorAll('#seg-base button').forEach(function (b) {
+        b.setAttribute('aria-pressed', String(b === btn));
+      });
+      render();
+    });
+  });
+
+  // ---- 终端教学标签 ----
+  var TABS = { 'tab-win': 'panel-win', 'tab-mac': 'panel-mac', 'tab-linux': 'panel-linux' };
+  Object.keys(TABS).forEach(function (tabId) {
+    var tab = document.getElementById(tabId);
+    tab.addEventListener('click', function () {
+      Object.keys(TABS).forEach(function (id) {
+        var t = document.getElementById(id);
+        var p = document.getElementById(TABS[id]);
+        var on = id === tabId;
+        t.setAttribute('aria-selected', String(on));
+        p.classList.toggle('hidden', !on);
+      });
+    });
+  });
+
+  function selectOsTab(os) {
+    var tabId = os === 'win' ? 'tab-win' : 'tab-mac';
+    Object.keys(TABS).forEach(function (id) {
+      var t = document.getElementById(id);
+      var p = document.getElementById(TABS[id]);
+      var on = id === tabId;
+      t.setAttribute('aria-selected', String(on));
+      p.classList.toggle('hidden', !on);
+    });
+  }
+
+  // ---- 复制 ----
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text);
+    }
+    return new Promise(function (resolve, reject) {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy') ? resolve() : reject(new Error('copy failed')); }
+      catch (e) { reject(e); }
+      finally { document.body.removeChild(ta); }
+    });
+  }
+
+  document.querySelectorAll('.copy-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var target = document.getElementById(btn.dataset.copy);
+      if (!target) return;
+      copyText(target.textContent).then(function () {
+        var old = btn.textContent;
+        btn.textContent = '已复制';
+        btn.classList.add('copied');
+        setTimeout(function () {
+          btn.textContent = old;
+          btn.classList.remove('copied');
+        }, 1800);
+      }).catch(function () {
+        btn.textContent = '请手动选择';
+        setTimeout(function () { btn.textContent = '复制'; }, 1800);
+      });
+    });
+  });
+
+  // ---- 主题 ----
+  var root = document.documentElement;
+  var saved = null;
+  try { saved = localStorage.getItem('sub2api-install-theme'); } catch (e) {}
+  if (saved === 'light' || saved === 'dark') {
+    root.setAttribute('data-theme', saved);
+  }
+  document.getElementById('theme-toggle').addEventListener('click', function () {
+    var next = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('sub2api-install-theme', next); } catch (e) {}
+  });
+
+  // ---- 截图占位：有图片就自动替换 ----
+  document.querySelectorAll('.shot[data-shot]').forEach(function (fig) {
+    var name = fig.dataset.shot;
+    var img = new Image();
+    img.src = 'shots/' + name + '.png';
+    img.alt = fig.querySelector('figcaption') ? fig.querySelector('figcaption').textContent : name;
+    img.loading = 'lazy';
+    img.addEventListener('load', function () {
+      fig.classList.add('has-image');
+      while (fig.firstChild) fig.removeChild(fig.firstChild);
+      fig.appendChild(img);
+    });
+    img.addEventListener('error', function () { /* 保留占位 */ });
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
