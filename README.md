@@ -8,7 +8,7 @@ Sub2API 的「接入工具」引导站，以及它分发的两个安装脚本。
 
 用户在自己的电脑上把 Claude Code / Codex CLI / OpenCode 接到 Sub2API 时，通常要手改配置文件、填 base URL、填 Key、确认协议类型。这个站点把这件事变成「复制一条命令，粘贴到终端」。
 
-WorkBuddy 这类桌面客户端没有配置文件可写，页面会给手动图文步骤：在客户端里添加自定义模型，填 Base URL、Key、模型名。
+WorkBuddy 和 DSH（DeepSeek Harness）这类桌面客户端没有配置文件可写，页面会给手动图文步骤：在客户端里添加自定义模型 / 提供商，填接口地址、Key、模型名。
 
 页面负责教怎么打开终端、怎么拿 Key、怎么确认成功；脚本负责真正写配置。
 
@@ -109,7 +109,7 @@ Windows 下对应 `%USERPROFILE%\.claude\settings.json`、`%USERPROFILE%\.codex\
 
 ## 截图
 
-页面里有 12 个截图位，用 `data-shot` 标记：
+页面里有 16 个截图位，用 `data-shot` 标记：
 
 | 文件名 | 内容 |
 |---|---|
@@ -124,6 +124,10 @@ Windows 下对应 `%USERPROFILE%\.claude\settings.json`、`%USERPROFILE%\.codex\
 | `workbuddy-model-menu.png` | 模型菜单底部的「配置自定义模型」 |
 | `workbuddy-add-model.png` | 「添加模型」窗口 |
 | `workbuddy-saved.png` | 保存后的模型配置 |
+| `dsh-open-settings.png` | DSH 左下角「设置」入口 |
+| `dsh-model-provider.png` | 模型页「+ 添加模型提供商」 |
+| `dsh-custom-api.png` | 自定义模型 API 的填写项 |
+| `dsh-select-model.png` | 模型菜单里选中自定义模型 |
 | `usage-verify.png` | 用量明细里的调用记录 |
 
 把图片按上面的文件名放进 `site/shots/`，重跑 `./deploy/apply.sh` 就会同步到集群。页面加载时检查图片是否存在，存在就替换、不存在就保留占位样式，所以可以分批加。

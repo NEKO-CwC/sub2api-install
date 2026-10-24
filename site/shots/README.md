@@ -1,6 +1,6 @@
 # 截图清单
 
-页面里的 12 个截图位。已上传：keys-create、keys-create-setting、copy-key、workbuddy-*（4 张）。仍待补：终端相关的 3 张、terminal-paste-key、usage-verify。按下面的文件名把图片放进 `site/shots/`，然后跑 `./deploy/apply.sh` 就会自动替换占位图。
+页面里的 16 个截图位。除 `linux-open-terminal.png` 外都已上传。按下面的文件名把图片放进 `site/shots/`，然后跑 `./deploy/apply.sh` 就会自动替换占位图。
 
 ## 建议规格
 

@@ -457,6 +457,7 @@ footer {
         <button type="button" data-client="codex" aria-pressed="false">Codex CLI</button>
         <button type="button" data-client="opencode" aria-pressed="false">OpenCode</button>
         <button type="button" data-client="workbuddy" aria-pressed="false">WorkBuddy</button>
+        <button type="button" data-client="dsh" aria-pressed="false">DSH</button>
       </div>
     </div>
 
@@ -681,6 +682,99 @@ footer {
     </div>
   </section>
 
+  <!-- ========== 4D. DSH 手动配置 ========== -->
+  <section class="card" id="dsh" hidden>
+    <div class="card-head">
+      <span class="step-no">4</span>
+      <h2>在 DSH 里添加模型提供商</h2>
+    </div>
+    <p class="card-desc">DSH（DeepSeek Harness）是桌面客户端，同样没有配置文件可写。它支持自定义 OpenAI 兼容接口，一共 4 步。</p>
+
+    <div class="subhead"><span class="n">1</span>打开设置 <small>第 1 步</small></div>
+    <div class="howto">
+      <ol class="steps tight">
+        <li>启动 DSH，进入主界面。</li>
+        <li>点左下角的 <strong>「设置」</strong>（齿轮图标，快捷键 <kbd>Ctrl</kbd> + <kbd>,</kbd>）。</li>
+        <li>设置窗口里左侧是分类，右侧是具体选项。</li>
+      </ol>
+      <figure class="shot" data-shot="dsh-open-settings">
+        <svg class="shot-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 3-3 3M13 15h4"/></svg>
+        <span class="shot-tag">dsh-open-settings.png</span>
+        <figcaption>左下角的「设置」入口</figcaption>
+      </figure>
+    </div>
+
+    <div class="subhead"><span class="n">2</span>进入模型设置 <small>第 2 步</small></div>
+    <div class="howto">
+      <ol class="steps tight">
+        <li>左侧选 <strong>「模型」</strong>。</li>
+        <li>右侧会列出已有的提供商。点最下面的 <strong>「+ 添加模型提供商」</strong>。</li>
+        <li>如果你之前已经登录过 DeepSeek 账号，这里会显示「已登录」，不影响添加自定义提供商。</li>
+      </ol>
+      <figure class="shot" data-shot="dsh-model-provider">
+        <svg class="shot-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 3-3 3M13 15h4"/></svg>
+        <span class="shot-tag">dsh-model-provider.png</span>
+        <figcaption>模型页底部的「+ 添加模型提供商」</figcaption>
+      </figure>
+    </div>
+
+    <div class="subhead"><span class="n">3</span>填写自定义模型 API <small>第 3 步</small></div>
+    <div class="howto">
+      <ol class="steps tight">
+        <li>顶部切到 <strong>「自定义模型 API」</strong> 标签。</li>
+        <li><strong>Provider ID</strong>：随便起一个小写标识，比如 <code>sub2api</code>。</li>
+        <li><strong>API 地址</strong>：<code>https://sub2api.ncuos.com</code></li>
+        <li><strong>API 协议</strong>：选 <code>OpenAI Chat Completions</code>。</li>
+        <li><strong>API 密钥</strong>：粘贴第 3 步复制的 <code>sk-...</code>。</li>
+        <li>点 <strong>「获取可用模型」</strong>，下方会出现模型列表，勾选你要用的。</li>
+        <li>点右下角 <strong>「创建提供商」</strong>。</li>
+      </ol>
+      <figure class="shot" data-shot="dsh-custom-api">
+        <svg class="shot-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 3-3 3M13 15h4"/></svg>
+        <span class="shot-tag">dsh-custom-api.png</span>
+        <figcaption>自定义模型 API 的 5 个必填项</figcaption>
+      </figure>
+    </div>
+
+    <div class="note warn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>
+      <span>API 协议要选 <strong>OpenAI Chat Completions</strong>，所以第 3 步建 Key 时分组必须选 <strong>OpenAI 厂商</strong>。Claude 分组在这里用不了。</span>
+    </div>
+
+    <div class="subhead"><span class="n">4</span>切换到刚添加的模型 <small>第 4 步</small></div>
+    <div class="howto">
+      <ol class="steps tight">
+        <li>回到对话界面，点输入框右下角的模型名称。</li>
+        <li>菜单里会多出你刚建的 Provider ID 分组，展开后选中里面的模型。</li>
+        <li>发一句话试试。能回复就说明请求已经走你的 Key 了。</li>
+      </ol>
+      <figure class="shot" data-shot="dsh-select-model">
+        <svg class="shot-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 3-3 3M13 15h4"/></svg>
+        <span class="shot-tag">dsh-select-model.png</span>
+        <figcaption>模型菜单里选中自定义提供商的模型</figcaption>
+      </figure>
+    </div>
+
+    <div class="subhead"><span class="n">i</span>对照表</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>DSH 里的字段</th><th>填什么</th></tr></thead>
+        <tbody>
+          <tr><td>Provider ID</td><td>自定义，小写字母开头，如 <code>sub2api</code></td></tr>
+          <tr><td>API 地址</td><td><code>https://sub2api.ncuos.com</code></td></tr>
+          <tr><td>API 协议</td><td><code>OpenAI Chat Completions</code></td></tr>
+          <tr><td>API 密钥</td><td>第 3 步复制的 <code>sk-...</code></td></tr>
+          <tr><td>模型目录</td><td>点「获取可用模型」后勾选</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note info">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
+      <span>点「获取可用模型」没反应，通常是地址或 Key 不对。把这条命令贴到终端跑一下，能直接看到服务端返回的错误：<code>curl https://sub2api.ncuos.com/v1/models -H "Authorization: Bearer 你的Key"</code></span>
+    </div>
+  </section>
+
   <!-- ========== 5. 验证 ========== -->
   <section class="card" id="verify">
     <div class="card-head">
@@ -700,10 +794,10 @@ footer {
       </li>
     </ul>
 
-    <ul class="checklist" id="verify-wb" hidden>
+    <ul class="checklist" id="verify-manual" hidden>
       <li>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-        <span>在 WorkBuddy 里 <strong>选中刚添加的模型</strong>，随便问一句话。能正常回复就说明通了。</span>
+        <span id="verify-manual-step1">在 WorkBuddy 里 <strong>选中刚添加的模型</strong>，随便问一句话。能正常回复就说明通了。</span>
       </li>
       <li>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
@@ -716,9 +810,9 @@ footer {
       <span>如果终端里提示找不到命令（<code>command not found</code> / <code>不是内部或外部命令</code>），说明这个工具还没装。回到第 4 步，用「带 CLI 安装」那条命令重跑一次。</span>
     </div>
 
-    <div class="note info" id="verify-note-wb" hidden>
+    <div class="note info" id="verify-note-manual" hidden>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
-      <span>用量明细里没有记录，说明请求没打到 Sub2API。检查 Base URL 是否以 <code>/v1</code> 结尾、有没有选错模型、WorkBuddy 里是否已经切到自定义模型。</span>
+      <span id="verify-manual-note">用量明细里没有记录，说明请求没打到 Sub2API。检查 Base URL 是否以 <code>/v1</code> 结尾、有没有选错模型、WorkBuddy 里是否已经切到自定义模型。</span>
     </div>
 
     <figure class="shot" data-shot="usage-verify">
@@ -783,7 +877,8 @@ footer {
     'claude-code': { label: 'Claude Code', launch: 'claude', installPkg: '@anthropic-ai/claude-code' },
     'codex':       { label: 'Codex CLI',   launch: 'codex',  installPkg: '@openai/codex' },
     'opencode':    { label: 'OpenCode',    launch: 'opencode', installPkg: 'opencode-ai' },
-    'workbuddy':   { label: 'WorkBuddy',   launch: '', installPkg: '', manual: true }
+    'workbuddy':   { label: 'WorkBuddy',   launch: '', installPkg: '', manual: true, section: 'workbuddy' },
+    'dsh':         { label: 'DSH',         launch: '', installPkg: '', manual: true, section: 'dsh' }
   };
 
   function show(el, on) { if (el) el.hidden = !on; }
@@ -825,25 +920,40 @@ footer {
     var meta = CLIENT_META[state.client];
     var manual = !!meta.manual;
 
-    // WorkBuddy 是桌面客户端，没有脚本可跑
+    // WorkBuddy / DSH 是桌面客户端，没有脚本可跑
     show(document.getElementById('run'), !manual);
-    show(document.getElementById('workbuddy'), manual);
+    show(document.getElementById('workbuddy'), manual && meta.section === 'workbuddy');
+    show(document.getElementById('dsh'), manual && meta.section === 'dsh');
     show(document.getElementById('rollback'), !manual);
 
     show(document.getElementById('verify-cli'), !manual);
     show(document.getElementById('verify-note-cli'), !manual);
-    show(document.getElementById('verify-wb'), manual);
-    show(document.getElementById('verify-note-wb'), manual);
+    show(document.getElementById('verify-manual'), manual);
+    show(document.getElementById('verify-note-manual'), manual);
 
     document.getElementById('key-desc').textContent = manual
-      ? 'Key 相当于你的通行证。第 4 步把它填进 WorkBuddy，不需要在终端里输入。'
+      ? 'Key 相当于你的通行证。第 4 步把它填进 ' + meta.label + '，不需要在终端里输入。'
       : 'Key 相当于你的通行证。脚本运行时会让你粘贴，不会保存在网页里。';
 
-    document.getElementById('verify-desc').textContent = manual
-      ? '配置保存后，按下面两步确认 WorkBuddy 真的在用你的 Key。'
-      : '脚本跑完后会显示它写了哪个文件、你有哪些模型、当前计费倍率。然后按下面两步确认能真的用起来。';
+    if (manual) {
+      document.getElementById('verify-desc').textContent =
+        '配置保存后，按下面两步确认 ' + meta.label + ' 真的在用你的 Key。';
+      if (meta.section === 'dsh') {
+        document.getElementById('verify-manual-step1').textContent =
+          '在 DSH 里选中刚添加的模型，随便问一句话。能正常回复就说明通了。';
+        document.getElementById('verify-manual-note').textContent =
+          '用量明细里没有记录，说明请求没打到 Sub2API。检查 API 地址是否填对、协议是否选了 OpenAI Chat Completions、模型是否已勾选。';
+      } else {
+        document.getElementById('verify-manual-step1').textContent =
+          '在 WorkBuddy 里选中刚添加的模型，随便问一句话。能正常回复就说明通了。';
+        document.getElementById('verify-manual-note').textContent =
+          '用量明细里没有记录，说明请求没打到 Sub2API。检查 Base URL 是否以 /v1 结尾、有没有选错模型、WorkBuddy 里是否已经切到自定义模型。';
+      }
+      return;
+    }
 
-    if (manual) return;
+    document.getElementById('verify-desc').textContent =
+      '脚本跑完后会显示它写了哪个文件、你有哪些模型、当前计费倍率。然后按下面两步确认能真的用起来。';
 
     document.getElementById('cmd-win').classList.toggle('hidden', !isWin);
     document.getElementById('cmd-unix').classList.toggle('hidden', isWin);
