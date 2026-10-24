@@ -8,6 +8,8 @@ Sub2API 的「接入工具」引导站，以及它分发的两个安装脚本。
 
 用户在自己的电脑上把 Claude Code / Codex CLI / OpenCode 接到 Sub2API 时，通常要手改配置文件、填 base URL、填 Key、确认协议类型。这个站点把这件事变成「复制一条命令，粘贴到终端」。
 
+WorkBuddy 这类桌面客户端没有配置文件可写，页面会给手动图文步骤：在客户端里添加自定义模型，填 Base URL、Key、模型名。
+
 页面负责教怎么打开终端、怎么拿 Key、怎么确认成功；脚本负责真正写配置。
 
 ```
@@ -107,15 +109,23 @@ Windows 下对应 `%USERPROFILE%\.claude\settings.json`、`%USERPROFILE%\.codex\
 
 ## 截图
 
-页面里有 5 个截图位，用 `data-shot` 标记：
+页面里有 12 个截图位，用 `data-shot` 标记：
 
 | 文件名 | 内容 |
 |---|---|
 | `windows-open-terminal.png` | Win+X 菜单里「终端」的位置 |
 | `mac-open-terminal.png` | 聚焦搜索里输入「终端」的画面 |
 | `linux-open-terminal.png` | Linux 终端窗口的提示符 |
-| `keys-create.png` | Keys 页面「创建 API Key」按钮 |
+| `keys-create.png` | 「创建密钥」按钮 |
+| `keys-create-setting.png` | 创建密钥弹窗：名字、分组 |
+| `copy-key.png` | 列表里复制 Key 的图标 |
 | `terminal-paste-key.png` | 脚本提示「请粘贴 Sub2API Key」的画面 |
+| `workbuddy-open.png` | WorkBuddy 主界面 |
+| `workbuddy-model-menu.png` | 模型菜单底部的「配置自定义模型」 |
+| `workbuddy-add-model.png` | 「添加模型」窗口 |
+| `workbuddy-saved.png` | 保存后的模型配置 |
 | `usage-verify.png` | 用量明细里的调用记录 |
 
-把图片按上面的文件名放进 `site/shots/`，重跑 `./deploy/apply.sh` 就会自动替换占位图。页面加载时也会检查图片是否存在，存在就替换、不存在就保留占位样式，所以可以分批加。
+把图片按上面的文件名放进 `site/shots/`，重跑 `./deploy/apply.sh` 就会同步到集群。页面加载时检查图片是否存在，存在就替换、不存在就保留占位样式，所以可以分批加。
+
+截图不走 ConfigMap：十几张图内联进去会超过 API Server 1MiB 的单对象上限。`apply.sh` 会在 rollout 完成后把 `site/shots/*.png` 同步到 `install-site-shots` PVC 上。

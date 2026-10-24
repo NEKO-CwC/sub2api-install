@@ -295,6 +295,29 @@ kbd {
 }
 .shot.has-image { border-style: solid; background: var(--bg-850); padding: 10px; }
 
+/* ---------- 图文并排 ---------- */
+.flow { display: grid; gap: 12px; margin: 14px 0 4px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.flow figure { margin: 0; }
+.flow .shot { min-height: 120px; }
+.flow .shot figcaption { max-width: none; }
+
+.subhead {
+  display: flex; align-items: baseline; gap: 10px;
+  margin: 26px 0 10px; padding-top: 22px;
+  border-top: 1px solid var(--border);
+  font-size: 15px; font-weight: 640; color: var(--text);
+}
+.subhead .n {
+  font-family: var(--mono); font-size: 12px; font-weight: 600;
+  color: var(--primary-300); background: rgba(20,184,166,.1);
+  border: 1px solid rgba(20,184,166,.25);
+  padding: 1px 7px; border-radius: 6px;
+}
+.subhead small { font-weight: 400; color: var(--text-faint); font-size: 12.5px; }
+
+.steps.tight li { padding-bottom: 14px; font-size: 14px; }
+.steps.tight li::after { bottom: 2px; }
+
 /* ---------- 列表 ---------- */
 .checklist { list-style: none; margin: 0; padding: 0; }
 .checklist li {
@@ -327,6 +350,7 @@ footer {
 }
 
 .hidden { display: none !important; }
+[hidden] { display: none !important; }
 
 /* ---------- 打印 ---------- */
 @media print {
@@ -432,6 +456,7 @@ footer {
         <button type="button" data-client="claude-code" aria-pressed="true">Claude Code</button>
         <button type="button" data-client="codex" aria-pressed="false">Codex CLI</button>
         <button type="button" data-client="opencode" aria-pressed="false">OpenCode</button>
+        <button type="button" data-client="workbuddy" aria-pressed="false">WorkBuddy</button>
       </div>
     </div>
 
@@ -455,9 +480,9 @@ footer {
   <section class="card" id="key">
     <div class="card-head">
       <span class="step-no">3</span>
-      <h2>准备一个 Key</h2>
+      <h2 id="key-title">准备一个 Key</h2>
     </div>
-    <p class="card-desc">Key 相当于你的通行证。脚本运行时会让你粘贴，不会保存在网页里。</p>
+    <p class="card-desc" id="key-desc">Key 相当于你的通行证。脚本运行时会让你粘贴，不会保存在网页里。</p>
 
     <ul class="checklist">
       <li>
@@ -466,31 +491,47 @@ footer {
       </li>
       <li>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-        <span>点「创建 API Key」，给它起个名字（比如 <code>我的笔记本</code>），选好分组。</span>
+        <span>点「创建密钥」，给它起个名字（随便起，比如 <code>test</code>）。</span>
       </li>
       <li>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-        <span>复制以 <code>sk-</code> 开头的那一串。先放在剪贴板里，下一步会用到。</span>
+        <span>在「分组」里选一个你需要的分组。有余额就选付费分组，没有就选 <code>免费 deepseek</code>。</span>
+      </li>
+      <li>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        <span>点「创建」后，在列表里点密钥旁边的复制图标，以 <code>sk-</code> 开头的一串就到剪贴板了。</span>
       </li>
     </ul>
 
     <div class="note warn">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>
-      <span>Key 等同于密码。不要发到群里、不要提交到 Git 仓库、不要贴进截图。泄露了就在 Keys 页面删掉重建。</span>
+      <span>Key 等同于密码。不要发到群里、不要提交到 Git 仓库、不要贴进截图。泄露了就在密钥页面删掉重建。</span>
     </div>
 
-    <figure class="shot" data-shot="keys-create">
-      <svg class="shot-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 3-3 3M13 15h4"/></svg>
-      <span class="shot-tag">keys-create.png</span>
-      <figcaption>Keys 页面里「创建 API Key」按钮的位置</figcaption>
-    </figure>
+    <div class="flow">
+      <figure class="shot" data-shot="keys-create">
+        <svg class="shot-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 3-3 3M13 15h4"/></svg>
+        <span class="shot-tag">keys-create.png</span>
+        <figcaption>「创建密钥」按钮的位置</figcaption>
+      </figure>
+      <figure class="shot" data-shot="keys-create-setting">
+        <svg class="shot-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 3-3 3M13 15h4"/></svg>
+        <span class="shot-tag">keys-create-setting.png</span>
+        <figcaption>填名字、选分组，最后点「创建」</figcaption>
+      </figure>
+      <figure class="shot" data-shot="copy-key">
+        <svg class="shot-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 3-3 3M13 15h4"/></svg>
+        <span class="shot-tag">copy-key.png</span>
+        <figcaption>点复制图标，直接复制到剪贴板</figcaption>
+      </figure>
+    </div>
   </section>
 
   <!-- ========== 4. 复制命令 ========== -->
   <section class="card" id="run">
     <div class="card-head">
       <span class="step-no">4</span>
-      <h2>复制命令，粘贴到终端</h2>
+      <h2 id="run-title">复制命令，粘贴到终端</h2>
     </div>
     <p class="card-desc" id="run-desc">回到终端，粘贴下面这条，按回车。脚本会提示你粘贴 Key（输入时不会显示），然后自动完成剩下的步骤。</p>
 
@@ -552,15 +593,103 @@ footer {
     </figure>
   </section>
 
+  <!-- ========== 4W. WorkBuddy 手动配置 ========== -->
+  <section class="card" id="workbuddy" hidden>
+    <div class="card-head">
+      <span class="step-no" id="wb-no">4</span>
+      <h2>在 WorkBuddy 里添加模型</h2>
+    </div>
+    <p class="card-desc">WorkBuddy 是桌面客户端，没有配置文件可以写，所以这一步手动填，一共 4 个地方。Key 直接用第 3 步复制的那一串。</p>
+
+    <div class="subhead"><span class="n">7</span>打开 WorkBuddy <small>第 1 步</small></div>
+    <div class="howto">
+      <ol class="steps tight">
+        <li>启动 WorkBuddy，进入主界面。中间是输入框。</li>
+        <li>右下角显示当前模型，默认一般是 <strong>Auto</strong>。</li>
+        <li>先不用管它，接下来把 Sub2API 的 Key 配进去。</li>
+      </ol>
+      <figure class="shot" data-shot="workbuddy-open">
+        <svg class="shot-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 3-3 3M13 15h4"/></svg>
+        <span class="shot-tag">workbuddy-open.png</span>
+        <figcaption>WorkBuddy 主界面，右下角是模型选择器</figcaption>
+      </figure>
+    </div>
+
+    <div class="subhead"><span class="n">8</span>进入自定义模型配置 <small>第 2 步</small></div>
+    <div class="howto">
+      <ol class="steps tight">
+        <li>点输入框右下角的模型名称（通常是 <strong>Auto</strong>），弹出模型菜单。</li>
+        <li>拉到菜单最底下，点 <strong>「配置自定义模型」</strong>。</li>
+        <li>之前加过就进模型管理页，没加过会直接弹出「添加模型」窗口。</li>
+      </ol>
+      <figure class="shot" data-shot="workbuddy-model-menu">
+        <svg class="shot-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 3-3 3M13 15h4"/></svg>
+        <span class="shot-tag">workbuddy-model-menu.png</span>
+        <figcaption>菜单底部的「配置自定义模型」</figcaption>
+      </figure>
+    </div>
+
+    <div class="subhead"><span class="n">9</span>填写模型信息 <small>第 3 步</small></div>
+    <div class="howto">
+      <ol class="steps tight">
+        <li><strong>接口地址</strong>：<code>https://sub2api.ncuos.com/v1</code>。如果这个下拉框没让你填地址，就先选任意一个「通用 / OpenAI 兼容」类的提供商。</li>
+        <li><strong>API Key</strong>：粘贴第 3 步复制的那串 <code>sk-...</code>。</li>
+        <li><strong>模型名称</strong>：填你想用的模型 ID，比如 <code>deepseek-chat</code>。这个名字要和你分组里实际的模型 ID 一致，可以在 <a href="https://sub2api.ncuos.com/keys" target="_blank" rel="noopener">密钥页面的「使用密钥」</a>里看到。</li>
+        <li>点 <strong>保存</strong>。</li>
+      </ol>
+      <figure class="shot" data-shot="workbuddy-add-model">
+        <svg class="shot-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 3-3 3M13 15h4"/></svg>
+        <span class="shot-tag">workbuddy-add-model.png</span>
+        <figcaption>「添加模型」窗口的三个输入项</figcaption>
+      </figure>
+    </div>
+
+    <div class="note warn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>
+      <span>WorkBuddy 只接受 <strong>OpenAI 兼容协议</strong>。所以分组要选 <strong>OpenAI 厂商</strong> 的（创建密钥时选 OpenAI），Claude 分组在这里用不了。</span>
+    </div>
+
+    <div class="subhead"><span class="n">10</span>选中并开始对话 <small>第 4 步</small></div>
+    <div class="howto">
+      <ol class="steps tight">
+        <li>保存后回到对话界面，再点右下角模型选择器。</li>
+        <li>选中刚添加的模型。</li>
+        <li>发一句话试试。能回复就说明已经走你的 Key 了。</li>
+      </ol>
+      <figure class="shot" data-shot="workbuddy-saved">
+        <svg class="shot-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 3-3 3M13 15h4"/></svg>
+        <span class="shot-tag">workbuddy-saved.png</span>
+        <figcaption>保存后的模型配置</figcaption>
+      </figure>
+    </div>
+
+    <div class="subhead"><span class="n">i</span>对照表</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>WorkBuddy 里的字段</th><th>填什么</th></tr></thead>
+        <tbody>
+          <tr><td>接口地址 / Base URL</td><td><code>https://sub2api.ncuos.com/v1</code></td></tr>
+          <tr><td>API Key</td><td>第 3 步复制的 <code>sk-...</code></td></tr>
+          <tr><td>模型名称</td><td>分组里的模型 ID，如 <code>deepseek-chat</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note info">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
+      <span>保存后没反应？先确认 Key 复制完整、分组余额够、模型 ID 拼写正确。还不通就把这条命令贴到终端跑一下，能直接看到服务端返回的错误：<code>curl https://sub2api.ncuos.com/v1/models -H "Authorization: Bearer 你的Key"</code></span>
+    </div>
+  </section>
+
   <!-- ========== 5. 验证 ========== -->
   <section class="card" id="verify">
     <div class="card-head">
       <span class="step-no">5</span>
       <h2>确认成功</h2>
     </div>
-    <p class="card-desc">脚本跑完后会显示它写了哪个文件、你有哪些模型、当前计费倍率。然后按下面两步确认能真的用起来。</p>
+    <p class="card-desc" id="verify-desc">脚本跑完后会显示它写了哪个文件、你有哪些模型、当前计费倍率。然后按下面两步确认能真的用起来。</p>
 
-    <ul class="checklist">
+    <ul class="checklist" id="verify-cli">
       <li>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
         <span><strong>新开一个终端窗口</strong>，运行 <code id="launch-cmd">claude</code>，随便问一句话。能正常回复就说明通了。</span>
@@ -571,9 +700,25 @@ footer {
       </li>
     </ul>
 
-    <div class="note info">
+    <ul class="checklist" id="verify-wb" hidden>
+      <li>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        <span>在 WorkBuddy 里 <strong>选中刚添加的模型</strong>，随便问一句话。能正常回复就说明通了。</span>
+      </li>
+      <li>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        <span>回到 <a href="https://sub2api.ncuos.com/usage" target="_blank" rel="noopener">用量明细</a>，应该能看到刚才这次调用。</span>
+      </li>
+    </ul>
+
+    <div class="note info" id="verify-note-cli">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
       <span>如果终端里提示找不到命令（<code>command not found</code> / <code>不是内部或外部命令</code>），说明这个工具还没装。回到第 4 步，用「带 CLI 安装」那条命令重跑一次。</span>
+    </div>
+
+    <div class="note info" id="verify-note-wb" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
+      <span>用量明细里没有记录，说明请求没打到 Sub2API。检查 Base URL 是否以 <code>/v1</code> 结尾、有没有选错模型、WorkBuddy 里是否已经切到自定义模型。</span>
     </div>
 
     <figure class="shot" data-shot="usage-verify">
@@ -584,7 +729,7 @@ footer {
   </section>
 
   <!-- ========== 6. 回滚 ========== -->
-  <section class="card" id="rollback">
+  <section class="card" id="rollback" hidden>
     <div class="card-head">
       <span class="step-no">6</span>
       <h2>想撤销？</h2>
@@ -637,8 +782,11 @@ footer {
   var CLIENT_META = {
     'claude-code': { label: 'Claude Code', launch: 'claude', installPkg: '@anthropic-ai/claude-code' },
     'codex':       { label: 'Codex CLI',   launch: 'codex',  installPkg: '@openai/codex' },
-    'opencode':    { label: 'OpenCode',    launch: 'opencode', installPkg: 'opencode-ai' }
+    'opencode':    { label: 'OpenCode',    launch: 'opencode', installPkg: 'opencode-ai' },
+    'workbuddy':   { label: 'WorkBuddy',   launch: '', installPkg: '', manual: true }
   };
+
+  function show(el, on) { if (el) el.hidden = !on; }
 
   function cmdUnix() {
     return 'curl -fsSL ' + SITE + '/install.sh | bash -s -- --client ' + state.client;
@@ -675,6 +823,27 @@ footer {
   function render() {
     var isWin = state.os === 'win';
     var meta = CLIENT_META[state.client];
+    var manual = !!meta.manual;
+
+    // WorkBuddy 是桌面客户端，没有脚本可跑
+    show(document.getElementById('run'), !manual);
+    show(document.getElementById('workbuddy'), manual);
+    show(document.getElementById('rollback'), !manual);
+
+    show(document.getElementById('verify-cli'), !manual);
+    show(document.getElementById('verify-note-cli'), !manual);
+    show(document.getElementById('verify-wb'), manual);
+    show(document.getElementById('verify-note-wb'), manual);
+
+    document.getElementById('key-desc').textContent = manual
+      ? 'Key 相当于你的通行证。第 4 步把它填进 WorkBuddy，不需要在终端里输入。'
+      : 'Key 相当于你的通行证。脚本运行时会让你粘贴，不会保存在网页里。';
+
+    document.getElementById('verify-desc').textContent = manual
+      ? '配置保存后，按下面两步确认 WorkBuddy 真的在用你的 Key。'
+      : '脚本跑完后会显示它写了哪个文件、你有哪些模型、当前计费倍率。然后按下面两步确认能真的用起来。';
+
+    if (manual) return;
 
     document.getElementById('cmd-win').classList.toggle('hidden', !isWin);
     document.getElementById('cmd-unix').classList.toggle('hidden', isWin);
@@ -705,9 +874,8 @@ footer {
       ? '回到终端（PowerShell），粘贴下面这条，按回车。脚本会提示你粘贴 Key（输入时不会显示），然后自动完成剩下的步骤。'
       : '回到终端，粘贴下面这条，按回车。脚本会提示你粘贴 Key（输入时不会显示），然后自动完成剩下的步骤。';
 
-    document.getElementById('install-hint').textContent = isWin
-      ? '没装 Node.js 也没关系。脚本会检查环境，缺什么会告诉你怎么补。要装 CLI 才需要 Node.js。'
-      : '没装 Node.js 也没关系。脚本会检查环境，缺什么会告诉你怎么补。要装 CLI 才需要 Node.js。';
+    document.getElementById('install-hint').textContent =
+      '没装 Node.js 也没关系。脚本会检查环境，缺什么会告诉你怎么补。要装 CLI 才需要 Node.js。';
   }
 
   // ---- 工具切换 ----
@@ -821,18 +989,18 @@ footer {
   });
 
   // ---- 截图占位：有图片就自动替换 ----
+  // 注意：onload 必须同步设置，否则图片可能已从缓存完成加载、事件永远不会触发
   document.querySelectorAll('.shot[data-shot]').forEach(function (fig) {
     var name = fig.dataset.shot;
-    var img = new Image();
-    img.src = 'shots/' + name + '.png';
-    img.alt = fig.querySelector('figcaption') ? fig.querySelector('figcaption').textContent : name;
-    img.loading = 'lazy';
-    img.addEventListener('load', function () {
+    var img = document.createElement('img');
+    var caption = fig.querySelector('figcaption');
+    img.alt = caption ? caption.textContent : name;
+    img.onload = function () {
       fig.classList.add('has-image');
       while (fig.firstChild) fig.removeChild(fig.firstChild);
       fig.appendChild(img);
-    });
-    img.addEventListener('error', function () { /* 保留占位 */ });
+    };
+    img.src = 'shots/' + name + '.png';
   });
 
   render();

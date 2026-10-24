@@ -1,3 +1,19 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: install-site-shots
+  namespace: sub2api
+  labels:
+    app.kubernetes.io/name: install-site
+    app.kubernetes.io/part-of: sub2api
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: longhorn
+  resources:
+    requests:
+      storage: 1Gi
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -9,10 +25,7 @@ metadata:
 spec:
   replicas: 1
   strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 0
-      maxSurge: 1
+    type: Recreate
   selector:
     matchLabels:
       app: install-site
@@ -60,6 +73,8 @@ spec:
             - name: site
               mountPath: /usr/share/nginx/html
               readOnly: true
+            - name: shots
+              mountPath: /usr/share/nginx/html/shots
             - name: tmp
               mountPath: /tmp
           readinessProbe:
@@ -102,6 +117,10 @@ spec:
                 path: install.sh
               - key: install.ps1
                 path: install.ps1
+        # 截图放在 PVC 上：全部内联进 ConfigMap 会超过 API Server 1MiB 的单对象上限
+        - name: shots
+          persistentVolumeClaim:
+            claimName: install-site-shots
         - name: tmp
           emptyDir:
             sizeLimit: 64Mi

@@ -13,6 +13,7 @@ NAMESPACE="sub2api"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SITE_DIR="$ROOT/site"
 OUT="$ROOT/deploy/generated"
+KUBECTL=(kubectl --kubeconfig "$KUBECONFIG_PATH")
 
 DRY_RUN=0
 [ "${1:-}" = "--dry-run" ] && DRY_RUN=1
@@ -22,8 +23,12 @@ DRY_RUN=0
 
 mkdir -p "$OUT"
 
+echo ":: 等待旧 Pod 退出（PVC 是 ReadWriteOnce，必须 Recreate）..."
+"${KUBECTL[@]}" scale deployment/install-site -n "$NAMESPACE" --replicas=0 2>/dev/null || true
+"${KUBECTL[@]}" wait --for=delete pod -l app=install-site -n "$NAMESPACE" --timeout=90s 2>/dev/null || true
+
 echo ":: 生成 ConfigMap ..."
-kubectl --kubeconfig "$KUBECONFIG_PATH" create configmap install-site \
+"${KUBECTL[@]}" create configmap install-site \
   --namespace "$NAMESPACE" \
   --from-file=index.html="$SITE_DIR/index.html" \
   --from-file=install.sh="$SITE_DIR/install.sh" \
@@ -31,39 +36,42 @@ kubectl --kubeconfig "$KUBECONFIG_PATH" create configmap install-site \
   --from-file=nginx.conf="$ROOT/deploy/nginx.conf" \
   --dry-run=client -o yaml > "$OUT/configmap.yaml"
 
-if [ -d "$SITE_DIR/shots" ] && [ -n "$(ls -A "$SITE_DIR/shots" 2>/dev/null)" ]; then
-  echo ":: 生成截图 ConfigMap ..."
-  kubectl --kubeconfig "$KUBECONFIG_PATH" create configmap install-site-shots \
-    --namespace "$NAMESPACE" \
-    --from-file="$SITE_DIR/shots" \
-    --dry-run=client -o yaml > "$OUT/configmap-shots.yaml"
-else
-  echo ":: 没有截图，跳过（占位图会保留）"
-  rm -f "$OUT/configmap-shots.yaml"
-fi
-
-echo ":: 合并清单 ..."
 {
   cat "$OUT/configmap.yaml"
   echo "---"
-  [ -f "$OUT/configmap-shots.yaml" ] && { cat "$OUT/configmap-shots.yaml"; echo "---"; }
   cat "$ROOT/deploy/workloads.yaml"
 } > "$OUT/all.yaml"
 
 if [ "$DRY_RUN" -eq 1 ]; then
   echo ":: server-side dry-run ..."
-  kubectl --kubeconfig "$KUBECONFIG_PATH" apply --dry-run=server -f "$OUT/all.yaml"
+  "${KUBECTL[@]}" apply --dry-run=server -f "$OUT/all.yaml"
   exit 0
 fi
 
 echo ":: apply ..."
-kubectl --kubeconfig "$KUBECONFIG_PATH" apply -f "$OUT/all.yaml"
+# configmap 可能还在旧 Pod 里被引用；先应用其余资源，再补一次 ConfigMap
+"${KUBECTL[@]}" apply -f "$OUT/all.yaml"
 
 echo ":: 等待 rollout ..."
-kubectl --kubeconfig "$KUBECONFIG_PATH" rollout status deployment/install-site -n "$NAMESPACE" --timeout=180s
+"${KUBECTL[@]}" rollout status deployment/install-site -n "$NAMESPACE" --timeout=180s
+
+echo ":: 同步截图到 PVC ..."
+POD="$("${KUBECTL[@]}" get pod -n "$NAMESPACE" -l app=install-site \
+  -o jsonpath='{.items[0].metadata.name}')"
+
+if compgen -G "$SITE_DIR/shots/*.png" > /dev/null; then
+  if tar -C "$SITE_DIR" -cf - shots | "${KUBECTL[@]}" exec -i "$POD" -n "$NAMESPACE" -- \
+      sh -ec 'rm -rf /usr/share/nginx/html/shots/* && tar -xf - -C /usr/share/nginx/html'; then
+    echo "   已同步 $(ls "$SITE_DIR/shots"/*.png | wc -l | tr -d ' ') 张截图"
+  else
+    echo "   （截图写入失败，页面会显示占位图）"
+  fi
+else
+  echo ":: 没有截图，跳过（占位图会保留）"
+fi
 
 echo ":: 检查 HTTPRoute ..."
-kubectl --kubeconfig "$KUBECONFIG_PATH" get httproute install-site-public -n "$NAMESPACE" -o wide
+"${KUBECTL[@]}" get httproute install-site-public -n "$NAMESPACE" -o wide
 
 echo
 echo "完成。站点地址: https://install.ncuos.com"
